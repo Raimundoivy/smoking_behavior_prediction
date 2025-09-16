@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Smoking Behavior Prediction Result{% endblock %}
+{% block content %}
+    <h1 class="mt-5">Smoking Behavior Prediction Result</h1>
+    <div class="mt-4">
+        {% if prediction == 1 %}
+            <div class="alert alert-danger" role="alert">
+                The model predicts that you are likely to be a smoker.
+            </div>
+        {% else %}
+            <div class="alert alert-success" role="alert">
+                The model predicts that you are not likely to be a smoker.
+            </div>
+        {% endif %}
+        <p>The predicted probability of being a smoker is: {{ "%.2f"|format(smoking_probability) }}</p>
+        <div class="progress">
+            <div class="progress-bar" role="progressbar" style="width: {{ smoking_probability * 100 }}%;" aria-valuenow="{{ smoking_probability * 100 }}" aria-valuemin="0" aria-valuemax="100">{{ "%.2f"|format(smoking_probability * 100) }}%</div>
+        </div>
+        <a href="/" class="btn btn-primary mt-3">Go Back</a>
+    </div>
+{% endblock %}
