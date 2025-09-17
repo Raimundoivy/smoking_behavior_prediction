@@ -61,7 +61,7 @@ The entire application is containerized, making setup incredibly simple.
 
 1.  **Clone the repository:**
     ```bash
-    git clone <your-repository-url>
+    git clone <https://github.com/Raimundoivy/smoking_behavior_prediction>
     cd smoking-behavior-prediction
     ```
 
