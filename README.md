@@ -1,69 +1,95 @@
 # Smoking Behavior Prediction
 
-This project is a machine learning application that predicts whether a person is a smoker based on their demographic and socio-economic information. The project includes a machine learning pipeline to process the data and train a model, and a Flask web application to serve the model and provide predictions.
+This project is a comprehensive machine learning application that predicts whether a person is a smoker based on their demographic and socio-economic information. The system is architected as a modern, multi-service web application, fully containerized with Docker for easy deployment and scalability.
 
-## Setup and Installation
+The front end is a dynamic, single-page application built with React that provides real-time predictions and model interpretability visualizations. It communicates with a dedicated Flask REST API that serves predictions from a trained logistic regression model.
+
+![Application Screenshot](https://i.imgur.com/your-screenshot-url.png) 
+*(**Action Required:** Take a screenshot of your final running application and replace the URL above.)*
+
+## Features
+
+* **Interactive UI:** A responsive, dashboard-style interface built with React for a seamless user experience.
+* **Real-Time "What-If" Analysis:** Modify input values and see the prediction update instantly without a page reload.
+* **Model Interpretability:** The UI displays the key factors influencing each prediction, separating them into those that increase and decrease risk.
+* **Global Insights:** Shows the most influential features for the model's overall decision-making process.
+* **Prediction Confidence:** Each prediction is accompanied by a confidence score (High, Medium, or Low).
+* **Persistent History:** Prediction history is saved in the browser's `localStorage` for a continuous user experience.
+* **Decoupled Architecture:** A dedicated Flask API serves the model, while a separate Flask web app serves the UI, proxied by Nginx.
+* **Containerized Deployment:** The entire multi-service application is managed by Docker and Docker Compose for one-command startup.
+
+## Tech Stack & Architecture
+
+This project utilizes a modern, service-oriented architecture.
+
+* **Machine Learning Pipeline (`main.py`):**
+    * **Pandas:** For data loading and manipulation.
+    * **Scikit-learn:** For building the preprocessing and modeling pipeline (`ColumnTransformer`, `StandardScaler`, `OneHotEncoder`, `LogisticRegression`).
+    * **Imbalanced-learn:** To handle class imbalance in the dataset using the `SMOTE` technique.
+
+* **Backend (`api.py`):**
+    * **Flask & Gunicorn:** A dedicated microservice to serve the trained model via a RESTful API.
+
+* **Frontend (`app.py` & `templates/index.html`):**
+    * **Flask & Gunicorn:** A lightweight web server responsible for rendering the main HTML page.
+    * **React:** For building the dynamic and interactive user interface.
+    * **Jinja2:** Used only to bootstrap the React component with initial data.
+
+* **Infrastructure:**
+    * **Docker & Docker Compose:** To containerize and orchestrate the multi-service application (`api`, `webapp`, `nginx`).
+    * **Nginx:** As a reverse proxy to route incoming traffic to the appropriate backend service.
+
+### Architecture Diagram
+```
+[ User Browser ] <--> [ Nginx (Port 80) ]
+       |                      |
+       |--- (/) ------------> [ Webapp Service (Flask/Gunicorn) ] --> Serves React UI
+       |
+       |--- (/predict) -----> [ API Service (Flask/Gunicorn) ] --> Returns JSON Prediction
+       |
+       |--- (/global) ------> [ API Service (Flask/Gunicorn) ] --> Returns JSON Insights
+```
+
+## Local Development Setup
+
+The entire application is containerized, making setup incredibly simple.
+
+### Prerequisites
+* [Docker](https://www.docker.com/products/docker-desktop/) must be installed and running.
+
+### Running the Application
 
 1.  **Clone the repository:**
-
     ```bash
-    git clone <repository-url>
+    git clone <your-repository-url>
     cd smoking-behavior-prediction
     ```
 
-2.  **Create and activate a Python virtual environment:**
-
-    ```bash
-    python3 -m venv venv
-    source venv/bin/activate
+2.  **Create the environment file:**
+    Create a `.env` file in the root of the project and add a secret key:
+    ```
+    SECRET_KEY=a-very-strong-and-secret-key-that-you-make-up
+    FLASK_DEBUG=true
     ```
 
-3.  **Install dependencies:**
-
+3.  **Build and Run with Docker Compose:**
+    This single command will build the Docker image (which includes training the model) and start all three services.
     ```bash
-    pip install -r requirements.txt
+    docker-compose up --build
     ```
 
-## Execution
+4.  **Access the Application:**
+    Once the containers are running, open your web browser and navigate to:
+    [http://localhost](http://localhost)
 
-1.  **Run the training pipeline:**
-
-    To train the model and generate the `full_pipeline.joblib` artifact, run the following command:
-
+5.  **Stopping the Application:**
+    To stop all services, press `Ctrl + C` in the terminal. To remove the containers and network, run:
     ```bash
-    python main.py
+    docker-compose down
     ```
 
-2.  **Start the Flask web application:**
+## Future Improvements
 
-    To start the Flask web application, run the following command:
-
-    ```bash
-    python app.py
-    ```
-
-    The application will be available at `http://127.0.0.1:5000`.
-
-## Project Structure
-
--   `main.py`: This script contains the code for building and training the machine learning pipeline. It loads the data, preprocesses it, trains a logistic regression model, and saves the entire pipeline as a `.joblib` file.
--   `app.py`: This is the main file for the Flask web application. It loads the saved pipeline and provides a web interface for users to input their information and get a prediction.
--   `full_pipeline.joblib`: This is the saved machine learning pipeline artifact. It includes all the preprocessing steps (encoding, scaling), the SMOTE resampling step, and the trained logistic regression model.
--   `templates/`: This directory contains the HTML templates for the web application.
-
-## Dataset
-
-The dataset used for training is `smoking.csv`. It contains various demographic and socio-economic features of individuals, such as age, gender, marital status, highest qualification, nationality, ethnicity, gross income, and region. The target variable is `smoke`, which indicates whether a person is a smoker or not.
-
-## Machine Learning Pipeline
-
-The machine learning pipeline is built using `scikit-learn` and `imblearn` and consists of the following steps:
-
-1.  **Preprocessing:**
-    -   **Categorical Features:** `OneHotEncoder` is used to convert categorical features into a numerical format.
-    -   **Ordinal Features:** `OrdinalEncoder` is used to convert ordinal features into a numerical format.
-    -   **Numerical Features:** `StandardScaler` is used to scale the numerical features.
-2.  **Resampling:**
-    -   `SMOTE` (Synthetic Minority Over-sampling Technique) is used to handle the class imbalance in the dataset by generating synthetic samples for the minority class.
-3.  **Model:**
-    -   A `LogisticRegression` model is used as the final classifier to predict whether a person is a smoker or not.
+* **Production-Ready Front-End Build:** Instead of using the in-browser Babel transformer, set up a Node.js build process (e.g., with Vite or Create React App) to pre-compile the React code for better performance.
+* **CI/CD Pipeline:** Implement a GitHub Actions workflow to automatically run tests, build the Docker images, and push them to a container registry like Docker Hub.
+* **Model Monitoring:** Add logging in the API to record incoming prediction requests and the model's output, which could be used to monitor for model drift over time.
