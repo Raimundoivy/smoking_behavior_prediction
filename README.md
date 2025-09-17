@@ -4,8 +4,6 @@ This project is a comprehensive machine learning application that predicts wheth
 
 The front end is a dynamic, single-page application built with React that provides real-time predictions and model interpretability visualizations. It communicates with a dedicated Flask REST API that serves predictions from a trained logistic regression model.
 
-![Application Screenshot](https://i.imgur.com/your-screenshot-url.png) 
-*(**Action Required:** Take a screenshot of your final running application and replace the URL above.)*
 
 ## Features
 
