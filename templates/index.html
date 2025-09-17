@@ -3,68 +3,161 @@
 {% block title %}Smoking Behavior Prediction{% endblock %}
 
 {% block content %}
-    <h1 class="mt-5">Smoking Behavior Prediction</h1>
-    
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }}" role="alert">
-                    {{ message }}
+    <div id="react-root"></div>
+
+    <script>
+        window.APP_CONFIG = {
+            genders: {{ config.VALID_GENDERS | tojson }},
+            maritalStatuses: {{ config.VALID_MARITAL_STATUSES | tojson }},
+            qualifications: {{ config.VALID_QUALIFICATIONS | tojson }},
+            nationalities: {{ config.VALID_NATIONALITIES | tojson }},
+            ethnicities: {{ config.VALID_ETHNICITIES | tojson }},
+            incomes: {{ config.VALID_INCOMES | tojson }},
+            regions: {{ config.VALID_REGIONS | tojson }}
+        };
+    </script>
+
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    {% raw %}
+    <script type="text/babel">
+        const { useState } = React;
+
+        // A sub-component to display the feature importance bars
+        const FeatureImportance = ({ features }) => {
+            const maxContribution = Math.max(...features.map(f => Math.abs(f.contribution)));
+
+            return (
+                <div className="mt-4">
+                    <h5>Key Factors in this Prediction:</h5>
+                    <ul className="list-unstyled">
+                        {features.map((feature, index) => {
+                            const isPositive = feature.contribution > 0;
+                            const barWidth = maxContribution > 0 ? (Math.abs(feature.contribution) / maxContribution) * 100 : 0;
+                            const barClass = isPositive ? 'bg-danger' : 'bg-success';
+                            const effectText = isPositive ? '(Increases smoking risk)' : '(Decreases smoking risk)';
+                            
+                            return (
+                                <li key={index} className="mb-2">
+                                    <div className="d-flex justify-content-between">
+                                        <span>{feature.feature}</span>
+                                        <small className="text-muted">{effectText}</small>
+                                    </div>
+                                    <div className="progress" style={{ height: '20px' }}>
+                                        <div 
+                                            className={`progress-bar ${barClass}`}
+                                            role="progressbar" 
+                                            style={{ width: `${barWidth}%` }} 
+                                            aria-valuenow={barWidth} 
+                                            aria-valuemin="0" 
+                                            aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                </li>
+                            );
+                        })}
+                    </ul>
                 </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+            );
+        };
 
-    <form method="POST" action="/" class="mt-4" novalidate>
-        {{ form.hidden_tag() }}
+        // The main application component
+        const PredictionForm = () => {
+            // Set initial form state using the config passed from Flask
+            const initialFormData = {
+                age: '30',
+                gender: window.APP_CONFIG.genders[0],
+                marital_status: window.APP_CONFIG.maritalStatuses[0],
+                highest_qualification: window.APP_CONFIG.qualifications[0],
+                nationality: window.APP_CONFIG.nationalities[0],
+                ethnicity: window.APP_CONFIG.ethnicities[0],
+                gross_income: window.APP_CONFIG.incomes[0],
+                region: window.APP_CONFIG.regions[0]
+            };
 
-        <div class="form-group">
-            {{ form.age.label }}
-            {{ form.age(class="form-control") }}
-            {% if form.age.errors %}
-                <div class="text-danger">
-                    {% for error in form.age.errors %}
-                        <span>{{ error }}</span>
-                    {% endfor %}
+            const [formData, setFormData] = useState(initialFormData);
+            const [result, setResult] = useState(null);
+            const [isLoading, setIsLoading] = useState(false);
+            const [error, setError] = useState('');
+
+            const handleChange = (e) => {
+                const { name, value } = e.target;
+                setFormData(prev => ({ ...prev, [name]: value }));
+            };
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setIsLoading(true);
+                setError('');
+                setResult(null);
+
+                try {
+                    // Fetch from the relative path, which Nginx will proxy to the API service
+                    const response = await fetch('/predict', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ...formData, age: parseInt(formData.age) })
+                    });
+
+                    if (!response.ok) {
+                        const errData = await response.json();
+                        throw new Error(errData.error || `Prediction service failed with status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    setResult(data);
+                } catch (err) {
+                    setError(err.message || 'Could not retrieve prediction. The service may be unavailable.');
+                    console.error(err);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+            
+            const renderOptions = (options) => options.map(opt => <option key={opt} value={opt}>{opt}</option>);
+
+            return (
+                <div>
+                    <h1 className="mt-5">Smoking Behavior Prediction</h1>
+                    <form onSubmit={handleSubmit} className="mt-4">
+                        <div className="row">
+                            <div className="col-md-6 form-group mb-3"><label htmlFor="age">Age</label><input type="number" name="age" id="age" className="form-control" value={formData.age} onChange={handleChange} required /></div>
+                            <div className="col-md-6 form-group mb-3"><label htmlFor="gender">Gender</label><select name="gender" id="gender" className="form-control" value={formData.gender} onChange={handleChange}>{renderOptions(window.APP_CONFIG.genders)}</select></div>
+                            <div className="col-md-6 form-group mb-3"><label htmlFor="marital_status">Marital Status</label><select name="marital_status" id="marital_status" className="form-control" value={formData.marital_status} onChange={handleChange}>{renderOptions(window.APP_CONFIG.maritalStatuses)}</select></div>
+                            <div className="col-md-6 form-group mb-3"><label htmlFor="highest_qualification">Highest Qualification</label><select name="highest_qualification" id="highest_qualification" className="form-control" value={formData.highest_qualification} onChange={handleChange}>{renderOptions(window.APP_CONFIG.qualifications)}</select></div>
+                            <div className="col-md-6 form-group mb-3"><label htmlFor="nationality">Nationality</label><select name="nationality" id="nationality" className="form-control" value={formData.nationality} onChange={handleChange}>{renderOptions(window.APP_CONFIG.nationalities)}</select></div>
+                            <div className="col-md-6 form-group mb-3"><label htmlFor="ethnicity">Ethnicity</label><select name="ethnicity" id="ethnicity" className="form-control" value={formData.ethnicity} onChange={handleChange}>{renderOptions(window.APP_CONFIG.ethnicities)}</select></div>
+                            <div className="col-md-6 form-group mb-3"><label htmlFor="gross_income">Gross Income</label><select name="gross_income" id="gross_income" className="form-control" value={formData.gross_income} onChange={handleChange}>{renderOptions(window.APP_CONFIG.incomes)}</select></div>
+                            <div className="col-md-6 form-group mb-3"><label htmlFor="region">Region</label><select name="region" id="region" className="form-control" value={formData.region} onChange={handleChange}>{renderOptions(window.APP_CONFIG.regions)}</select></div>
+                        </div>
+                        <button type="submit" className="btn btn-primary mt-3" disabled={isLoading}>
+                            {isLoading ? 'Predicting...' : 'Predict'}
+                        </button>
+                    </form>
+
+                    {error && <div className="alert alert-danger mt-4">{error}</div>}
+
+                    {result && (
+                        <div className="mt-4">
+                            <hr/>
+                            <h2>Prediction Result</h2>
+                            <div className={`alert ${result.prediction === 1 ? 'alert-danger' : 'alert-success'}`}>
+                                {result.prediction === 1 ? 'The model predicts this person is LIKELY to be a smoker.' : 'The model predicts this person is NOT LIKELY to be a smoker.'}
+                            </div>
+                            <p>The predicted probability of being a smoker is: <strong>{(result.smoking_probability * 100).toFixed(1)}%</strong></p>
+                            <div className="progress"><div className="progress-bar" role="progressbar" style={{ width: `${result.smoking_probability * 100}%` }} aria-valuenow={result.smoking_probability * 100} aria-valuemin="0" aria-valuemax="100"></div></div>
+                            {result.feature_importance && <FeatureImportance features={result.feature_importance} />}
+                        </div>
+                    )}
                 </div>
-            {% endif %}
-        </div>
+            );
+        };
 
-        <div class="form-group">
-            {{ form.gender.label }}
-            {{ form.gender(class="form-control") }}
-        </div>
-
-        <div class="form-group">
-            {{ form.marital_status.label }}
-            {{ form.marital_status(class="form-control") }}
-        </div>
-
-        <div class="form-group">
-            {{ form.highest_qualification.label }}
-            {{ form.highest_qualification(class="form-control") }}
-        </div>
-
-        <div class="form-group">
-            {{ form.nationality.label }}
-            {{ form.nationality(class="form-control") }}
-        </div>
-
-        <div class="form-group">
-            {{ form.ethnicity.label }}
-            {{ form.ethnicity(class="form-control") }}
-        </div>
-
-        <div class="form-group">
-            {{ form.gross_income.label }}
-            {{ form.gross_income(class="form-control") }}
-        </div>
-
-        <div class="form-group">
-            {{ form.region.label }}
-            {{ form.region(class="form-control") }}
-        </div>
-        
-        {{ form.submit(class="btn btn-primary") }}
-    </form>
+        const container = document.getElementById('react-root');
+        const root = ReactDOM.createRoot(container);
+        root.render(<PredictionForm />);
+    </script>
+    {% endraw %}
 {% endblock %}
