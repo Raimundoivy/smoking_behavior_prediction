@@ -1,0 +1,23 @@
+services:
+  # The new API service for model predictions
+  api:
+    build: .
+    container_name: smoking_prediction_api
+    env_file:
+      - .env
+    # The command to run the API application
+    command: gunicorn --bind 0.0.0.0:8000 api:app
+
+  # The existing web application for the user interface
+  webapp:
+    build: .
+    container_name: smoking_prediction_webapp
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    # This service depends on the API being available
+    depends_on:
+      - api
+    # The command to run the web application
+    command: gunicorn --bind 0.0.0.0:5000 app:app

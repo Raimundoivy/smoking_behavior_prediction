@@ -5,9 +5,9 @@ load_dotenv() # Load environment variables from .env file
 
 MODEL_PATH = "full_pipeline.joblib"
 DATA_PATH = "smoking.csv"
-SECRET_KEY = os.environ.get('SECRET_KEY')
-if not SECRET_KEY:
-    raise ValueError("SECRET_KEY not set. Please set it as an environment variable.")
+
+# Load the secret key, but don't raise an error if it's missing.
+SECRET_KEY = os.environ.get('SECRET_KEY') 
 FLASK_DEBUG = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
 
 # Define valid categories for validation

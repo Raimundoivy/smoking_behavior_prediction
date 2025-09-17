@@ -1,9 +1,14 @@
-flask
-joblib
-pandas
-scikit-learn
-gunicorn
-imbalanced-learn
-python-dotenv
-pytest
-pytest-mock
+# Web Framework & Server
+flask==2.3.2
+gunicorn==23.0.0
+Flask-WTF==1.2.1
+requests==2.32.3
+
+# Machine Learning & Data
+pandas==2.2.2
+scikit-learn==1.4.2
+imbalanced-learn==0.12.2
+joblib==1.4.2
+
+# Utilities
+python-dotenv==1.0.1

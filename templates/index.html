@@ -1,7 +1,10 @@
 {% extends "base.html" %}
+
 {% block title %}Smoking Behavior Prediction{% endblock %}
+
 {% block content %}
     <h1 class="mt-5">Smoking Behavior Prediction</h1>
+    
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
@@ -11,71 +14,57 @@
             {% endfor %}
         {% endif %}
     {% endwith %}
-    <form action="/predict" method="post" class="mt-4">
+
+    <form method="POST" action="/" class="mt-4" novalidate>
+        {{ form.hidden_tag() }}
+
         <div class="form-group">
-            <label for="age">Age</label>
-            <input type="number" class="form-control" id="age" name="age" required min="1" max="120">
+            {{ form.age.label }}
+            {{ form.age(class="form-control") }}
+            {% if form.age.errors %}
+                <div class="text-danger">
+                    {% for error in form.age.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% endif %}
         </div>
+
         <div class="form-group">
-            <label for="gender">Gender</label>
-            <select class="form-control" id="gender" name="gender">
-                {% for gender in genders %}
-                    <option>{{ gender }}</option>
-                {% endfor %}
-            </select>
+            {{ form.gender.label }}
+            {{ form.gender(class="form-control") }}
         </div>
+
         <div class="form-group">
-            <label for="marital_status">Marital Status</label>
-            <select class="form-control" id="marital_status" name="marital_status">
-                {% for status in marital_statuses %}
-                    <option>{{ status }}</option>
-                {% endfor %}
-            </select>
+            {{ form.marital_status.label }}
+            {{ form.marital_status(class="form-control") }}
         </div>
+
         <div class="form-group">
-            <label for="highest_qualification">Highest Qualification</label>
-            <select class="form-control" id="highest_qualification" name="highest_qualification">
-                {% for qualification in qualifications %}
-                    <option>{{ qualification }}</option>
-                {% endfor %}
-            </select>
+            {{ form.highest_qualification.label }}
+            {{ form.highest_qualification(class="form-control") }}
         </div>
+
         <div class="form-group">
-            <label for="nationality">Nationality</label>
-            <select class="form-control" id="nationality" name="nationality">
-                {% for nationality in nationalities %}
-                    <option>{{ nationality }}</option>
-                {% endfor %}
-            </select>
+            {{ form.nationality.label }}
+            {{ form.nationality(class="form-control") }}
         </div>
+
         <div class="form-group">
-            <label for="ethnicity">Ethnicity</label>
-            <select class="form-control" id="ethnicity" name="ethnicity">
-                <option>White</option>
-                <option>Mixed</option>
-                <option>Asian</option>
-                <option>Black</option>
-                <option>Chinese</option>
-                <option>Refused</option>
-                <option>Unknown</option>
-            </select>
+            {{ form.ethnicity.label }}
+            {{ form.ethnicity(class="form-control") }}
         </div>
+
         <div class="form-group">
-            <label for="gross_income">Gross Income</label>
-            <select class="form-control" id="gross_income" name="gross_income">
-                {% for income in incomes %}
-                    <option>{{ income }}</option>
-                {% endfor %}
-            </select>
+            {{ form.gross_income.label }}
+            {{ form.gross_income(class="form-control") }}
         </div>
+
         <div class="form-group">
-            <label for="region">Region</label>
-            <select class="form-control" id="region" name="region">
-                {% for region in regions %}
-                    <option value="{{ region }}" {% if request.form.region == region %}selected{% endif %}>{{ region }}</option>
-                {% endfor %}
-            </select>
+            {{ form.region.label }}
+            {{ form.region(class="form-control") }}
         </div>
-        <button type="submit" class="btn btn-primary">Predict</button>
+        
+        {{ form.submit(class="btn btn-primary") }}
     </form>
 {% endblock %}
