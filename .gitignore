@@ -1,12 +1,18 @@
-# Byte-compiled / optimized files
+# Python virtual environment
+venv/
 __pycache__/
 *.pyc
 
-# Test / coverage reports
-.pytest_cache/
+# IDE and OS files
+.vscode/
+.idea/
+*.DS_Store
 
 # Environment variables
 .env
 
-# ML models
-*.joblib
+# Pytest cache
+.pytest_cache/
+
+# Docker build cache (optional, but good practice)
+.dockerignore
